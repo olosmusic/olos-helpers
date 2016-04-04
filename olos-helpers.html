@@ -1,0 +1,74 @@
+<dom-module id="olos-helpers">
+</dom-module>
+<script>
+  (function (params) {
+    Polymer({
+      is: 'olos-helpers',
+
+      // calculate frequencies from a midi scale
+      // midiToFreq
+      /**
+       *  [mtof description]
+       *  @param  {Number} midiVal midi value to convert
+       *  @param  {Number} root    midi root note
+       *  @param  {String} tuning  either 'equal' or undefined
+       *  @return {Number}         frequency value
+       */
+      mtof: function(midiVal, root, tuning) {
+        var root = root || 69;
+        var frequency;
+        var a440midi = 69;
+
+        function eqlTemperament(midiVal) {
+          var stepsFromA440 = midiVal - a440midi;
+
+          // equal temperament equation based on 12th root of 2
+          freq = 440 * Math.pow(2, stepsFromA440/12);
+          return freq;
+        }
+
+        if (tuning !== 'equal') {
+
+          // just intonation ratios:
+          var twelveSteps = [1/1, 16/15, 9/8, 6/5, 5/4, 4/3, Math.sqrt(2), 3/2, 8/5, 5/3, 9/5, 15/8, 2/1];
+
+          var stepsFromRoot = midiVal - root;
+          var octavesFromRoot = Math.floor(stepsFromRoot / 12);
+          var rootFreq = eqlTemperament(root);
+
+          var arrayPosition = stepsFromRoot % 12;
+          if (arrayPosition < 0) {
+            arrayPosition = arrayPosition + 12;
+          }
+
+          var freq = rootFreq * twelveSteps[arrayPosition];
+          frequency = freq * Math.pow( 2, octavesFromRoot )
+        }
+
+        else {
+          frequency = eqlTemperament(midiVal);
+        }
+
+        return frequency;
+      },
+
+      // convert a number to frequency based on its distance from the root in half-steps
+      numToFreq: function(val, root) {
+        return this.mtof(val + root);
+      },
+
+      pitchToPlaybackRate: function(steps) {
+        // return (this.mtof(step) / this.mtof(root));
+        return Math.pow( 2, steps / 12 )
+      },
+
+      // convert a number to frequency based on its position in global scale, and dist from the root in scale position
+      // stepToFreq: function(val) {
+      //   var relativeVal = val % this.scale.length;
+      //   var octavesFromRoot = Math.floor( val / this.scale.length);
+      //   return this.numToFreq(this.scale[relativeVal] + octavesFromRoot*12);
+      // }
+  });
+}());
+
+</script>
